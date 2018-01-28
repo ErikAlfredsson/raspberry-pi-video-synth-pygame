@@ -16,6 +16,7 @@ import argparse
 
 import circle_drawing
 import snake
+import line
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-input", required=False, type=int, help="Audio Input Device")
@@ -75,6 +76,7 @@ magnitude = 0
 input_q = queue.Queue()
 
 apps = [
+    line.Line(),
     circle_drawing.CircleDrawing(),
     snake.Snake()
 ]
