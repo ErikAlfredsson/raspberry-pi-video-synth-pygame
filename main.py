@@ -13,7 +13,9 @@ import Queue as queue
 import time
 import math
 import argparse
+
 import circle_drawing
+import snake
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-input", required=False, type=int, help="Audio Input Device")
@@ -70,16 +72,24 @@ q = queue.Queue()
 low_pass = 0
 magnitude = 0
 
+input_q = queue.Queue()
+
 apps = [
-    circle_drawing.CircleDrawing()
+    circle_drawing.CircleDrawing(),
+    snake.Snake()
 ]
 active_app_index = 0
+
+black = (0, 0, 0)
 
 for app in apps:
     app.setup(screen, None)
 
 def draw_pygame():
-    running = True    
+    global active_app_index
+    running = True        
+    delta_time = 0
+
     while running:
         key = pygame.key.get_pressed()
 
@@ -90,12 +100,18 @@ def draw_pygame():
                 running = False
 
         onset = not q.empty()
-
         if onset:
-            b = q.get()              
+            b = q.get()      
 
-        apps[active_app_index].draw(screen, {"onset": onset, "low_pass": low_pass, "magnitude": magnitude})        
-        clock.tick(24)
+        input = not input_q.empty()
+        if input:
+            input_q.get()            
+            active_app_index = (active_app_index + 1) % len(apps)
+            screen.fill(black)   
+            pygame.display.flip()     
+
+        apps[active_app_index].draw(screen, {"onset": onset, "low_pass": low_pass, "magnitude": magnitude, "delta_time": delta_time})        
+        delta_time = clock.tick(30)
 
 def filter(signal, cut_off_frequency):    
     freq_ratio = (cut_off_frequency/samplerate)
@@ -126,10 +142,22 @@ def get_onsets():
             print("*** Ctrl+C pressed, exiting")
             break
 
+def getInput():
+    while True:
+        try:
+            input = raw_input("Press W then enter to go to next app\n")            
+            input_q.put(input)
+        except KeyboardInterrupt:
+            break
+
 
 t = Thread(target=get_onsets, args=())
 t.daemon = True
 t.start()
+
+input_thread = Thread(target=getInput, args=())
+input_thread.daemon = True
+input_thread.start()
 
 draw_pygame()
 stream.stop_stream()

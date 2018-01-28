@@ -10,23 +10,22 @@ class Snake(App):
 
 	def setup(self, screen, data):
 		print("Setting up Snake")				
+		self.size = 50
+		self.height = screen.get_height() - self.size * 2
+		self.draw_rect = pygame.Rect(int(screen.get_width() // 4), 0, int(screen.get_width() // 2 + self.size * 2), int(screen.get_height()))
 	
 	def draw(self, screen, data):
-		# screen.fill((0,0,0))
+		for i in xrange(self.size * 3, self.height):			
+			current_time = time.time()
+			xpos = int(screen.get_width() // 2 + self.size * math.sin(i * .02 + current_time))
 
-		for i in range(screen.get_height() - self.circle.size):
-			y = screen.get_height() * 0.5 + math.sin(self.step) * screen.get_height() * 0.5
-			self.circle.y = int(y)
-			x = math.sin(self.step * 4 + 0.5)                        			
-			xpos = int(screen.get_width() // 2 + 100 * math.sin(i * .02 + time.time()))
+			color = (int(127 + 127 * math.sin(i * .01 + current_time)), 
+				int(127 + 127 * math.sin(i * .011 + current_time)),
+				int(127 + 127 * math.sin(i * .012 + current_time)))
 
-			color = (int(127 + 127 * math.sin(i * .01 + time.time())), 
-				int(127 + 127 * math.sin(i * .011 + time.time())),
-				int(127 + 127 * math.sin(i * .012 + time.time())))
+			radius = int(50 + 40 * math.sin(i * .005 + current_time))
+			pygame.gfxdraw.filled_circle(screen, xpos, i, radius, color)    			
 
-			# radius = int(50 + 40 * math.sin(i * .005 + time.time()))
-			radius = int(self.circle.size * max(0.3, data["low_pass"]))
-			pygame.gfxdraw.filled_circle(screen, xpos, i, radius, color)    
-
-		self.step += 0.1
-		pygame.display.flip()        
+		self.step += 0.025
+		pygame.display.update(self.draw_rect)
+		# pygame.display.flip()        
