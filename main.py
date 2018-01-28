@@ -77,8 +77,8 @@ input_q = queue.Queue()
 
 apps = [
     line.Line(),
-    circle_drawing.CircleDrawing(),
-    snake.Snake()
+    snake.Snake(),
+    circle_drawing.CircleDrawing()    
 ]
 active_app_index = 0
 
