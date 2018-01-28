@@ -102,7 +102,7 @@ def draw_pygame():
                 running = False
 
         onset = not q.empty()
-        if onset:
+        if onset:            
             b = q.get()      
 
         input = not input_q.empty()
@@ -111,7 +111,7 @@ def draw_pygame():
             active_app_index = (active_app_index + 1) % len(apps)
             screen.fill(black)   
             pygame.display.flip()     
-
+        
         apps[active_app_index].draw(screen, {"onset": onset, "low_pass": low_pass, "magnitude": magnitude, "delta_time": delta_time})        
         delta_time = clock.tick(30)
 

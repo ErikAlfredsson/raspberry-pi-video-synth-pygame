@@ -3,38 +3,70 @@ import pygame
 import math
 import time
 
+class GridItem(object):
+    def __init__(self, surface, x, y):        
+        self.surface = surface   
+        self.x = x
+        self.y = y
+
 class Line(App):		
 	def __init__(self):
 		self.step = 0.0
+		self.grid_items = []
 		super(Line, self).__init__()
 
 	def setup(self, screen, data):
-		print("Setting up Line")			
-		self.width = 10		
-		self.rotation = 0		
-		self.surf = pygame.Surface((screen.get_height(), screen.get_height()))
-		self.start_pos = pygame.math.Vector2(self.surf.get_width() // 2, screen.get_height())
-		self.end_pos = pygame.math.Vector2(self.surf.get_width() // 2, 0)
-		self.surf_x = int(screen.get_width() // 2 - self.surf.get_width() // 2)		
-	
-	def draw(self, screen, data):
-		color = (int(120 + 75 * math.sin(self.step * .5 + time.time())), 
-				int(90 + 20 * math.sin(self.step * .11 + time.time())),
-				int(75 + 75 * math.sin(self.step * .012 + time.time())))		
+		print("Setting up Line")					
+		self.rotation = 0
+		self.filter_factor = 0.05
+		self.filtered_magnitude = 0
+		self.background_color = (153, 153, 0)
+		self.line_color = (24, 24, 0)
+		self.clockwise_rotation = True
 
-		self.surf.fill((0, 0, 0))
+		vertical_items = 3
+		grid_size = screen.get_height() / vertical_items
+		horizontal_items = screen.get_width() // grid_size
+		
+		for i in xrange(0, vertical_items):			
+			for j in xrange(0, horizontal_items):
+				surface = pygame.Surface((grid_size, grid_size))				
+				x = grid_size * j
+				y = grid_size * i
+				item = GridItem(surface, x, y)
 
-		pygame.draw.line(self.surf, color, self.start_pos, self.end_pos, self.width)		
-		blitted_rect = screen.blit(self.surf, (self.surf_x, 0))		
-		old_center = blitted_rect.center
-		rotated_surf = pygame.transform.rotate(self.surf, self.rotation)		
-		rotated_rect = rotated_surf.get_rect()
-		rotated_rect.center = old_center
+				self.grid_items.append(item)
 
-		screen.blit(rotated_surf, rotated_rect)
+		print("{} grid items".format(len(self.grid_items)))
 
-		# % 360 to keep the angle between 0 and 360.
-		self.rotation = (self.rotation + 5) % 360
-		self.step += 0.025
-		pygame.display.update(blitted_rect)
-		# pygame.display.flip()        
+
+
+	def draw(self, screen, data):			
+		self.filtered_magnitude = self.filter_factor * self.filtered_magnitude + (1.0 - self.filter_factor) * data["magnitude"]
+
+		for index, grid_item in enumerate(self.grid_items):
+			start_pos = (grid_item.surface.get_width() // 2, grid_item.surface.get_height()) #pygame.math.Vector2(grid_width // 2, grid_height)
+			end_pos = (grid_item.surface.get_width() // 2, 0) #pygame.math.Vector2(grid_width // 2, 0)			
+			grid_item.surface.fill(self.background_color)
+
+			pygame.draw.line(grid_item.surface, self.line_color, start_pos, end_pos, 5)
+			blitted_rect = screen.blit(grid_item.surface, (grid_item.x, grid_item.y))		
+
+			old_center = blitted_rect.center
+			rotated_surf = pygame.transform.rotate(grid_item.surface, self.rotation)		
+			rotated_rect = rotated_surf.get_rect()
+			rotated_rect.center = old_center
+
+			screen.blit(rotated_surf, rotated_rect)
+
+		if data["onset"]:
+			self.clockwise_rotation = not self.clockwise_rotation
+
+		# delta_rotation = 0.25 #+ (5 * self.filtered_magnitude)
+		delta_rotation = 0.25 + 20 * self.filtered_magnitude
+		delta_rotation = (delta_rotation if self.clockwise_rotation else -delta_rotation)
+
+		self.rotation = (self.rotation + delta_rotation) % 360
+		self.step += 0.025		
+		# pygame.display.update(blitted_rect)
+		pygame.display.flip()        
